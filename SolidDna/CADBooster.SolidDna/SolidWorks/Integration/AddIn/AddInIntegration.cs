@@ -1,4 +1,5 @@
-﻿using SolidWorks.Interop.sldworks;
+﻿using CADBooster.SolidDna.CoreHelpers;
+using SolidWorks.Interop.sldworks;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -38,7 +39,7 @@ namespace CADBooster.SolidDna
             try
             {
                 // Try and get the active SolidWorks instance
-                SolidWorks = new SolidWorksApplication((SldWorks)Marshal.GetActiveObject("SldWorks.Application"), 0);
+                SolidWorks = new SolidWorksApplication((SldWorks)MarshalCore.GetActiveObject("SldWorks.Application"), 0);
 
                 // Log it
                 Logger.LogDebugSource($"Acquired active instance SolidWorks in Stand-Alone mode");
