@@ -2,17 +2,12 @@ using Microsoft.Win32;
 using SolidWorks.Interop.sldworks;
 using SolidWorks.Interop.swpublished;
 using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.IO;
-using System.Runtime.InteropServices;
 
 namespace CADBooster.SolidDna
 {
     /// <summary>
     /// Integrates into SolidWorks as an add-in and registers for callbacks provided by SolidWorks
-    /// 
-    /// IMPORTANT: The class that overrides <see cref="ISwAddin"/> MUST be the same class that 
+    /// IMPORTANT: The class that overrides <see cref="ISwAddin" /> MUST be the same class that
     /// contains the ComRegister and ComUnregister functions due to how SolidWorks loads add-ins
     /// </summary>
     [ComVisible(true)]
@@ -20,106 +15,57 @@ namespace CADBooster.SolidDna
     public abstract class SolidAddIn : ISwAddin
     {
         #region Protected Members
-
         /// <summary>
         /// Flag if we have loaded into memory (as ConnectedToSolidWorks can happen multiple times if unloaded/reloaded)
         /// </summary>
         protected bool mLoaded;
-
         #endregion
 
         #region Public Properties
-
-        /// <summary>
-        /// Provides functions related to SolidDna plug-ins
-        /// </summary>
-        public PlugInIntegration PlugInIntegration { get; private set; } = new PlugInIntegration();
-
-        /// <summary>
-        /// A list of available plug-ins loaded once SolidWorks has connected
-        /// </summary>
-        public List<SolidPlugIn> PlugIns { get; set; } = new List<SolidPlugIn>();
-
         /// <summary>
         /// The title displayed for this SolidWorks Add-in
         /// </summary>
-        public string SolidWorksAddInTitle { get; set; } = "CADBooster SolidDna AddIn";
+        public abstract string SolidWorksAddInTitle { get; }
 
         /// <summary>
         /// The description displayed for this SolidWorks Add-in
         /// </summary>
-        public string SolidWorksAddInDescription { get; set; } = "All your pixels are belong to us!";
-
+        public abstract string SolidWorksAddInDescription { get; }
         #endregion
-
-        #region Public Events
-
-        /// <summary>
-        /// Called once SolidWorks has loaded our add-in and is ready.
-        /// Now is a good time to create task panes, menu bars or anything else.
-        ///  
-        /// NOTE: This call will be made twice, one in the default domain and one in the AppDomain as the SolidDna plug-ins
-        /// </summary>
-        public event Action ConnectedToSolidWorks = () => { };
-
-        /// <summary>
-        /// Called once SolidWorks has unloaded our add-in.
-        /// Now is a good time to clean up task panes, menu bars or anything else.
-        /// 
-        /// NOTE: This call will be made twice, one in the default domain and one in the AppDomain as the SolidDna plug-ins
-        /// </summary>
-        public event Action DisconnectedFromSolidWorks = () => { };
-
-        #endregion
-
-        #region Constructor
 
         /// <summary>
         /// Default constructor
         /// </summary>
-        public SolidAddIn()
-        {
-            PlugInIntegration.ParentAddIn = this;
-        }
-
-        #endregion
+        public SolidAddIn() { }
 
         #region Public Abstract / Virtual Methods
-
         /// <summary>
-        /// Specific application startup code when SolidWorks is connected 
+        /// Specific application startup code when SolidWorks is connected
         /// and before any plug-ins or listeners are informed.
-        /// Runs after <see cref="PreConnectToSolidWorks"/> and after <see cref="PreLoadPlugIns"/>.
-        /// 
+        /// Runs after <see cref="PreConnectToSolidWorks" /> and after <see cref="PreLoadPlugIns" />.
         /// NOTE: This call will not be in the same AppDomain as the SolidDna plug-ins
         /// </summary>
         /// <returns></returns>
         public abstract void ApplicationStartup();
 
         /// <summary>
-        /// Run immediately when <see cref="ConnectToSW(object, int)"/> is called to do any pre-setup.
-        /// For example, call <see cref="Logger.AddFileLogger{TAddIn}"/> to add a file logger for SolidDna messages.
-        /// Runs before <see cref="PreLoadPlugIns"/> and before <see cref="ApplicationStartup"/>.
+        /// Run immediately when <see cref="ConnectToSW(object, int)" /> is called to do any pre-setup.
+        /// For example, call <see cref="Logger.AddFileLogger{TAddIn}" /> to add a file logger for SolidDna messages.
+        /// Runs before <see cref="PreLoadPlugIns" /> and before <see cref="ApplicationStartup" />.
         /// </summary>
         public abstract void PreConnectToSolidWorks();
 
-        /// <summary>
-        /// Run before loading plug-ins.
-        /// This call should be used to add plug-ins to be loaded, via <see cref="PlugInIntegration.AddPlugIn{T}"/>.
-        /// Runs after <see cref="PreConnectToSolidWorks"/> and before <see cref="ApplicationStartup"/>.
-        /// </summary>
-        /// <returns></returns>
-        public abstract void PreLoadPlugIns();
+        public abstract void ConnectedToSolidWorks();
 
+        public abstract void DisconnectedFromSolidWorks();
         #endregion
 
         #region SolidWorks Add-in Callbacks
-
         /// <summary>
-        /// Receives all callbacks from command manager items and flyouts. 
-        /// We tell SolidWorks to call a method in the <see cref="SolidAddIn"/> class in <see cref="SetUpCallbacks"/>
-        /// We tell it to call this method in <see cref="CommandManagerGroup.AddCommandItem"/> and <see cref="CommandManagerFlyout.AddCommandItem"/>.
-        /// We forward this to <see cref="PlugInIntegration.OnCallback"/>, which then finds the correct command manager item or flyout and calls its OnClick method.
+        /// Receives all callbacks from command manager items and flyouts.
+        /// We tell SolidWorks to call a method in the <see cref="SolidAddIn" /> class in <see cref="SetUpCallbacks" />
+        /// We tell it to call this method in <see cref="CommandManagerGroup.AddCommandItem" /> and <see cref="CommandManagerFlyout.AddCommandItem" />.
+        /// We forward this to <see cref="PlugInIntegration.OnCallback" />, which then finds the correct command manager item or flyout and calls its OnClick method.
         /// </summary>
         /// <param name="arg"></param>
         public void Callback(string arg)
@@ -127,7 +73,7 @@ namespace CADBooster.SolidDna
             // Log it
             Logger.LogDebugSource($"SolidWorks Callback fired {arg}");
 
-            PlugInIntegration.OnCallback(arg);
+            AddInIntegration.OnCallback(arg);
         }
 
         /// <summary>
@@ -178,15 +124,6 @@ namespace CADBooster.SolidDna
                 // If this is the first load
                 if (!mLoaded)
                 {
-                    // Any pre-load steps
-                    PreLoadPlugIns();
-
-                    // Log it
-                    Logger.LogDebugSource($"Configuring PlugIns...");
-
-                    // Perform any plug-in configuration
-                    PlugInIntegration.ConfigurePlugIns(assemblyPath, this);
-
                     // Now loaded so don't do it again
                     mLoaded = true;
                 }
@@ -202,12 +139,6 @@ namespace CADBooster.SolidDna
 
                 // Inform listeners
                 ConnectedToSolidWorks();
-
-                // Log it
-                Logger.LogDebugSource($"PlugInIntegration ConnectedToSolidWorks...");
-
-                // And plug-in domain listeners
-                PlugInIntegration.ConnectedToSolidWorks(this);
 
                 // Return ok
                 return true;
@@ -236,9 +167,6 @@ namespace CADBooster.SolidDna
             // Inform listeners
             DisconnectedFromSolidWorks();
 
-            // And plug-in domain listeners
-            PlugInIntegration.DisconnectedFromSolidWorks(this);
-
             // Log it
             Logger.LogDebugSource($"Tearing down...");
 
@@ -248,9 +176,6 @@ namespace CADBooster.SolidDna
             // Remove the loggers for this add-in
             Logger.RemoveLoggers(this);
 
-            // Clear our references
-            PlugInIntegration = null;
-
             // Reset mLoaded so we can restart this add-in
             mLoaded = false;
 
@@ -259,23 +184,21 @@ namespace CADBooster.SolidDna
         }
 
         /// <summary>
-        /// Tell SolidWorks that it should call the <see cref="Callback"/> method in this class whenever it receives a Command Manager item or flyout button click.
-        /// We forward this to <see cref="PlugInIntegration.OnCallback"/>, which then finds the correct command manager item or flyout and calls its OnClick method.
+        /// Tell SolidWorks that it should call the <see cref="Callback" /> method in this class whenever it receives a Command Manager item or flyout button click.
+        /// We forward this to <see cref="PlugInIntegration.OnCallback" />, which then finds the correct command manager item or flyout and calls its OnClick method.
         /// </summary>
         /// <param name="thisSw"></param>
         /// <param name="cookie"></param>
         private void SetUpCallbacks(object thisSw, int cookie)
         {
             // Log it
-            Logger.LogDebugSource($"Setting AddinCallbackInfo...");
+            Logger.LogDebugSource($"Setting AddInCallbackInfo...");
 
-            var ok = ((SldWorks)thisSw).SetAddinCallbackInfo2(0, this, cookie);
+            ((SldWorks)thisSw).SetAddinCallbackInfo2(0, this, cookie);
         }
-
         #endregion
 
         #region Connected to SolidWorks Event Calls
-
         /// <summary>
         /// When the add-in has connected to SolidWorks
         /// </summary>
@@ -297,95 +220,72 @@ namespace CADBooster.SolidDna
 
             DisconnectedFromSolidWorks();
         }
-
         #endregion
 
         #region Com Registration
+        ///// <summary>
+        ///// The COM registration call to add our registry entries to the SolidWorks add-in registry
+        ///// </summary>
+        ///// <param name="t"></param>
+        //[ComRegisterFunction] protected static void ComRegister(Type t)
+        //{
+        //    try
+        //    {
+        //        // Create new instance of a blank add-in
+        //        var addIn = new BlankSolidAddIn();
 
-        /// <summary>
-        /// The COM registration call to add our registry entries to the SolidWorks add-in registry
-        /// </summary>
-        /// <param name="t"></param>
-        [ComRegisterFunction]
-        protected static void ComRegister(Type t)
-        {
-            try
-            {
-                // Create new instance of a blank add-in
-                var addIn = new BlankSolidAddIn();
+        //        // Get assembly name
+        //        var assemblyName = t.Assembly.Location;
 
-                // Get assembly name
-                var assemblyName = t.Assembly.Location;
+        //        // Log it
+        //        Logger.LogInformationSource($"Registering {assemblyName}");
 
-                // Log it
-                Logger.LogInformationSource($"Registering {assemblyName}");
+        //        // Get registry key path
+        //        var keyPath = string.Format(@"SOFTWARE\SolidWorks\AddIns\{0:b}", t.GUID);
 
-                // Get registry key path
-                var keyPath = string.Format(@"SOFTWARE\SolidWorks\AddIns\{0:b}", t.GUID);
+        //        // Create our registry folder for the add-in
+        //        using (var rk = Microsoft.Win32.Registry.LocalMachine.CreateSubKey(keyPath))
+        //        {
+        //            // Load add-in when SolidWorks opens
+        //            rk.SetValue(null, 1);
 
-                // Create our registry folder for the add-in
-                using (var rk = Registry.LocalMachine.CreateSubKey(keyPath))
-                {
-                    // Load add-in when SolidWorks opens
-                    rk.SetValue(null, 1);
+        //            // Set SolidWorks add-in title and description
+        //            rk.SetValue("Title", addIn.SolidWorksAddInTitle);
+        //            rk.SetValue("Description", addIn.SolidWorksAddInDescription);
 
-                    //
-                    // IMPORTANT: 
-                    //
-                    //   In this special case, COM register won't load the wrong CADBooster.SolidDna.dll file 
-                    //   as it isn't loading multiple instances and keeping them in memory
-                    //            
-                    //   So loading the path of the CADBooster.SolidDna.dll file that should be in the same
-                    //   folder as the add-in dll right now will work fine to get the add-in path
-                    //
-                    var pluginPath = typeof(PlugInIntegration).CodeBaseNormalized();
+        //            Logger.LogInformationSource($"COM Registration successful. '{addIn.SolidWorksAddInTitle}' : '{addIn.SolidWorksAddInDescription}'");
+        //        }
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        Debugger.Break();
 
-                    // Force auto-discovering plug-in during COM registration
-                    addIn.PlugInIntegration.AutoDiscoverPlugins = true;
+        //        // Get the path to this DLL
+        //        var assemblyLocation = typeof(SolidAddIn).AssemblyFilePath();
 
-                    Logger.LogInformationSource("Configuring plugins...");
+        //        // Create a path for a text file. The assembly location is always lowercase.
+        //        var changeExtension = assemblyLocation.Replace(".dll", ".fatal.log.txt");
 
-                    // Let plug-ins configure title and descriptions
-                    addIn.PlugInIntegration.ConfigurePlugIns(pluginPath, addIn);
+        //        // Log an error to a new or existing text file 
+        //        File.AppendAllText(changeExtension, $"\r\nUnexpected error: {ex}");
 
-                    // Set SolidWorks add-in title and description
-                    rk.SetValue("Title", addIn.SolidWorksAddInTitle);
-                    rk.SetValue("Description", addIn.SolidWorksAddInDescription);
+        //        Logger.LogCriticalSource($"COM Registration error. {ex}");
+        //        throw;
+        //    }
+        //}
 
-                    Logger.LogInformationSource($"COM Registration successful. '{addIn.SolidWorksAddInTitle}' : '{addIn.SolidWorksAddInDescription}'");
-                }
-            }
-            catch (Exception ex)
-            {
-                Debugger.Break();
+        ///// <summary>
+        ///// The COM unregister call to remove our custom entries we added in the COM register function
+        ///// </summary>
+        ///// <param name="t"></param>
+        //[ComUnregisterFunction] protected static void ComUnregister(Type t)
+        //{
+        //    // Get registry key path
+        //    var keyPath = string.Format(@"SOFTWARE\SolidWorks\AddIns\{0:b}", t.GUID);
 
-                // Get the path to this DLL
-                var assemblyLocation = typeof(SolidAddIn).AssemblyFilePath();
-
-                // Create a path for a text file. The assembly location is always lowercase.
-                var changeExtension = assemblyLocation.Replace(".dll", ".fatal.log.txt");
-
-                // Log an error to a new or existing text file 
-                File.AppendAllText(changeExtension, $"\r\nUnexpected error: {ex}");
-
-                Logger.LogCriticalSource($"COM Registration error. {ex}");
-                throw;
-            }
-        }
-
-        /// <summary>
-        /// The COM unregister call to remove our custom entries we added in the COM register function
-        /// </summary>
-        /// <param name="t"></param>
-        [ComUnregisterFunction]
-        protected static void ComUnregister(Type t)
-        {
-            // Get registry key path
-            var keyPath = $@"SOFTWARE\SolidWorks\AddIns\{t.GUID:b}";
-
-            // Remove our registry entry
-            Registry.LocalMachine.DeleteSubKeyTree(keyPath);
-        }
+        //    // Remove our registry entry
+        //    Microsoft.Win32.Registry.LocalMachine.DeleteSubKeyTree(keyPath);
+        //}
         #endregion
     }
 }

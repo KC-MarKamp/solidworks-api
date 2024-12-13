@@ -136,7 +136,7 @@ namespace CADBooster.SolidDna
             Type = type;
 
             // Listen out for callbacks
-            PlugInIntegration.CallbackFired += PlugInIntegration_CallbackFired;
+            AddInIntegration.CallbackFired += AddInIntegration_CallbackFired;
 
             // Add the items when the flyout is clicked for the first time. Does not work when you add items right away.
             OnClick = AddCommandItems;
@@ -188,7 +188,7 @@ namespace CADBooster.SolidDna
         /// Fired when a SolidWorks callback is fired
         /// </summary>
         /// <param name="name">The name of the callback that was fired</param>
-        private void PlugInIntegration_CallbackFired(string name)
+        private void AddInIntegration_CallbackFired(string name)
         {
             // Find the item, if any
             var item = Items?.FirstOrDefault(f => f.CallbackId == name);
@@ -203,7 +203,7 @@ namespace CADBooster.SolidDna
         public override void Dispose()
         {
             // Stop listening out for callbacks
-            PlugInIntegration.CallbackFired -= PlugInIntegration_CallbackFired;
+            AddInIntegration.CallbackFired -= AddInIntegration_CallbackFired;
 
             base.Dispose();
         }

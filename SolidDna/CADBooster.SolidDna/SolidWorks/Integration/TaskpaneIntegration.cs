@@ -115,10 +115,6 @@ namespace CADBooster.SolidDna
             // Set UI thread
             ThreadHelpers.Enable((Control)mHostControl);
 
-            // Hook into disconnect event of SolidWorks to unload ourselves automatically
-            if (mParentAddin != null)
-                mParentAddin.DisconnectedFromSolidWorks += RemoveFromTaskpane;
-
             // Add WPF control if we have one
             if (WpfControl != null)
             {

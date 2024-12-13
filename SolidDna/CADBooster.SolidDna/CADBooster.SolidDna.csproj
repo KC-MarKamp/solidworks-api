@@ -3,6 +3,10 @@
     <TargetFrameworks>net48;net8.0-windows</TargetFrameworks>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <UseWPF>true</UseWPF>
+    
+    <EnableComHosting>true</EnableComHosting>
+    <LangVersion>latest</LangVersion>
+    
     <UseWindowsForms>true</UseWindowsForms>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <Version>3.3.8.0</Version>

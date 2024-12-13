@@ -2,6 +2,7 @@ using CADBooster.SolidDna.CoreHelpers;
 using SolidWorks.Interop.sldworks;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Runtime.InteropServices;
 
@@ -10,26 +11,46 @@ namespace CADBooster.SolidDna
     public static class AddInIntegration
     {
         #region Public Properties
-
         /// <summary>
         /// Represents the current SolidWorks application
         /// </summary>
         public static SolidWorksApplication SolidWorks { get; private set; }
-
         #endregion
 
         #region Private properties
-
         /// <summary>
         /// A list of all add-ins that are currently active.
-        /// Private so we can call <see cref="TearDown"/> when the list becomes empty.
+        /// Private so we can call <see cref="TearDown" /> when the list becomes empty.
         /// </summary>
-        private static List<SolidAddIn> ActiveAddIns { get; } = new List<SolidAddIn>();
-
+        private static List<SolidAddIn> ActiveAddIns { get; } = new();
         #endregion
 
-        #region Stand Alone Methods
+        /// <summary>
+        /// Called when a SolidWorks callback is fired
+        /// </summary>
+        public static event Action<string> CallbackFired = (name) => { };
 
+        /// <summary>
+        /// Called by the SolidWorks domain (<see cref="SolidAddIn" />) when a callback is fired when a user clicks a command manager item or flyout.
+        /// </summary>
+        /// <param name="name">The parameter passed into the generic callback</param>
+        public static void OnCallback(string name)
+        {
+            try
+            {
+                // Inform listeners
+                CallbackFired(name);
+            }
+            catch (Exception ex)
+            {
+                Debugger.Break();
+
+                // Log it
+                Logger.LogCriticalSource($"OnCallback failed. {ex.GetErrorMessage()}");
+            }
+        }
+
+        #region Stand Alone Methods
         /// <summary>
         /// Attempts to set the SolidWorks property to the active SolidWorks instance
         /// </summary>
@@ -60,7 +81,7 @@ namespace CADBooster.SolidDna
 
         /// <summary>
         /// Attempts to set the SolidWorks property to the active SolidWorks instance.
-        /// Remember to call <see cref="TearDown"/> once done.
+        /// Remember to call <see cref="TearDown" /> once done.
         /// </summary>
         /// <returns></returns>
         public static void ConnectToActiveSolidWorks(string version, int cookie)
@@ -75,7 +96,7 @@ namespace CADBooster.SolidDna
             {
                 // Get the ProgId, the name of the application including the version number
                 var progId = GetProgId(version);
-                
+
                 // Initialize SolidWorks (SolidDNA class)
                 SolidWorks = new SolidWorksApplication((SldWorks)Activator.CreateInstance(Type.GetTypeFromProgID(progId)), cookie);
 
@@ -105,19 +126,14 @@ namespace CADBooster.SolidDna
             // Should not happen 
             return "SldWorks.Application";
         }
-
         #endregion
 
         #region List of active add-ins
-
         /// <summary>
         /// Add a newly loaded add-in to the list of active ones.
         /// </summary>
         /// <param name="addIn"></param>
-        public static void AddAddIn(SolidAddIn addIn)
-        {
-            ActiveAddIns.Add(addIn);
-        }
+        public static void AddAddIn(SolidAddIn addIn) => ActiveAddIns.Add(addIn);
 
         /// <summary>
         /// Remove an unloaded add-in from the list of active ones.
@@ -142,11 +158,9 @@ namespace CADBooster.SolidDna
             // Get the first add-in of this type. Is null when not found.
             return ActiveAddIns.FirstOrDefault(x => x.GetType() == type);
         }
-
         #endregion
 
         #region Tear Down
-
         /// <summary>
         /// Cleans up the SolidWorks instance
         /// </summary>
@@ -165,7 +179,6 @@ namespace CADBooster.SolidDna
             // Set to null
             SolidWorks = null;
         }
-
         #endregion
     }
 }
