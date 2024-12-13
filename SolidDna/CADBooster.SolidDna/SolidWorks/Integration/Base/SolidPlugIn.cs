@@ -1,10 +1,14 @@
-﻿namespace CADBooster.SolidDna
+using System.Runtime.InteropServices;
+
+namespace CADBooster.SolidDna
 {
     /// <summary>
     /// A base class to implement to become a SolidDna plug-in. 
     /// The compiled dll of SolidDna must be in the same location as 
     /// the plug-in dll to be discovered
     /// </summary>
+    [ComVisible(true)]
+    [Guid("7BBC6FB3-1AAD-42DE-9836-70727B527EA2")]
     public abstract class SolidPlugIn
     {
         #region Public Properties
@@ -50,6 +54,8 @@
     /// The compiled dll of SolidDna must be in the same location as 
     /// the plug-in dll to be discovered
     /// </summary>
+    [ComVisible(true)]
+    [Guid("AFEAA1E9-68EF-473D-AFC3-0771A661B5FC")]
     public abstract class SolidPlugIn<T> : SolidPlugIn
     {
         private SolidAddIn mParentAddIn;
@@ -66,7 +72,7 @@
                 // If we already have an add-in, do not change it.
                 if (mParentAddIn != null) return;
                 mParentAddIn = value;
-                
+
                 // Once we have our parent add-in, we can call these methods.
 
                 // Disable discovering plug-in and make it quicker by auto-adding it
@@ -78,15 +84,10 @@
         }
 
         #region Constructor
-
         /// <summary>
         /// Default constructor
         /// </summary>
-        public SolidPlugIn() : base()
-        {
-
-        }
-
+        public SolidPlugIn() : base() { }
         #endregion
     }
 }

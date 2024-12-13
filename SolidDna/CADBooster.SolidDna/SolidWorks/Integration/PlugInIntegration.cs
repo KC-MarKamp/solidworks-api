@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -10,10 +10,23 @@ namespace CADBooster.SolidDna
     /// <summary>
     /// Provides functions related to SolidDna plug-ins
     /// </summary>
+    [Guid("F42D10C1-6969-4A64-9EED-70BAE50B1399")]
     public class PlugInIntegration
     {
-        #region Public Properties
+        private static readonly List<string> SwDlls =
+        [
+            "SolidWorks.Interop.sldworks.dll",
+            "SolidWorks.Interop.sw3dprinter.dll",
+            "SolidWorks.Interop.swcommands.dll",
+            "SolidWorks.Interop.swconst.dll",
+            "SolidWorks.Interop.swdimxpert.dll",
+            "SolidWorks.Interop.swdocumentmgr.dll",
+            "SolidWorks.Interop.swmotionstudy.dll",
+            "SolidWorks.Interop.swpublished.dll",
+            "SolidWorks.Interop.SWRoutingLib.dll"
+        ];
 
+        #region Public Properties
         /// <summary>
         /// The add-in that owns this plugin integration.
         /// </summary>
@@ -201,6 +214,18 @@ namespace CADBooster.SolidDna
 
                 // Add new based on if found
                 foreach (var path in Directory.GetFiles(addinPath, "*.dll", SearchOption.TopDirectoryOnly))
+                {
+#if !NETFRAMEWORK
+                    // Skip .comhost.dll files for .NET Core applications. If we don't skip these files then System.BadImageFormatException
+                    // will be thrown. When these are thrown, we can't register our add-in. Also do not loop through the standard solidworks interop dlls. 
+                    Logger.LogDebugSource($"Checking for PlugIns within: {path}");
+                    var fileName = Path.GetFileName(path);
+                    if (SwDlls.Contains(fileName) || fileName.Contains(".comhost.dll"))
+                    {
+                        Logger.LogDebugSource($"Skipping file: {fileName}");
+                        continue;
+                    }
+#endif
                     GetPlugIns(path, (plugin) =>
                     {
                         // Log it
@@ -208,6 +233,7 @@ namespace CADBooster.SolidDna
 
                         plugIns.Add(plugin);
                     });
+                }
             }
             // Or load explicit ones
             else

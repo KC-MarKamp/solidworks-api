@@ -1,4 +1,5 @@
-﻿using SolidWorks.Interop.sldworks;
+using Microsoft.Win32;
+using SolidWorks.Interop.sldworks;
 using SolidWorks.Interop.swpublished;
 using System;
 using System.Collections.Generic;
@@ -14,6 +15,8 @@ namespace CADBooster.SolidDna
     /// IMPORTANT: The class that overrides <see cref="ISwAddin"/> MUST be the same class that 
     /// contains the ComRegister and ComUnregister functions due to how SolidWorks loads add-ins
     /// </summary>
+    [ComVisible(true)]
+    [Guid("9412BC8E-FE4E-4E50-B4EF-61D02E98C1EC")]
     public abstract class SolidAddIn : ISwAddin
     {
         #region Protected Members
@@ -321,7 +324,7 @@ namespace CADBooster.SolidDna
                 var keyPath = string.Format(@"SOFTWARE\SolidWorks\AddIns\{0:b}", t.GUID);
 
                 // Create our registry folder for the add-in
-                using (var rk = Microsoft.Win32.Registry.LocalMachine.CreateSubKey(keyPath))
+                using (var rk = Registry.LocalMachine.CreateSubKey(keyPath))
                 {
                     // Load add-in when SolidWorks opens
                     rk.SetValue(null, 1);
@@ -364,7 +367,7 @@ namespace CADBooster.SolidDna
 
                 // Log an error to a new or existing text file 
                 File.AppendAllText(changeExtension, $"\r\nUnexpected error: {ex}");
-                
+
                 Logger.LogCriticalSource($"COM Registration error. {ex}");
                 throw;
             }
@@ -378,13 +381,11 @@ namespace CADBooster.SolidDna
         protected static void ComUnregister(Type t)
         {
             // Get registry key path
-            var keyPath = string.Format(@"SOFTWARE\SolidWorks\AddIns\{0:b}", t.GUID);
+            var keyPath = $@"SOFTWARE\SolidWorks\AddIns\{t.GUID:b}";
 
             // Remove our registry entry
-            Microsoft.Win32.Registry.LocalMachine.DeleteSubKeyTree(keyPath);
-
+            Registry.LocalMachine.DeleteSubKeyTree(keyPath);
         }
-
         #endregion
     }
 }
