@@ -104,7 +104,7 @@ namespace CADBooster.SolidDna
             mMainIconPaths = Icons.GetFormattedPathDictionary(mainIconPathFormat);
 
             // Listen out for callbacks
-            PlugInIntegration.CallbackFired += PlugInIntegration_CallbackFired;
+            AddInIntegration.CallbackFired += AddInIntegration_CallbackFired;
         }
 
         /// <summary>
@@ -365,7 +365,7 @@ namespace CADBooster.SolidDna
         /// Fired when a SolidWorks callback is fired
         /// </summary>
         /// <param name="name">The name of the callback that was fired</param>
-        private void PlugInIntegration_CallbackFired(string name)
+        private void AddInIntegration_CallbackFired(string name)
         {
             // Find the item, if any
             var item = Items.FirstOrDefault(f => f.CallbackId == name);
@@ -430,7 +430,7 @@ namespace CADBooster.SolidDna
         public override void Dispose()
         {
             // Stop listening out for callbacks
-            PlugInIntegration.CallbackFired -= PlugInIntegration_CallbackFired;
+            AddInIntegration.CallbackFired -= AddInIntegration_CallbackFired;
 
             // Dispose all tabs
             foreach (var tab in mTabs.Values)
