@@ -1,3 +1,4 @@
+using CADBooster.SolidDna.CoreHelpers;
 using SolidWorks.Interop.sldworks;
 using System;
 using System.Collections.Generic;
